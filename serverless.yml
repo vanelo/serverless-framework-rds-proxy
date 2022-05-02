@@ -1,0 +1,59 @@
+service: db-resources
+frameworkVersion: '3.16.0'
+useDotenv: true
+provider:
+  name: aws
+  region: us-east-1
+  runtime: nodejs12.x
+  memorySize: 256
+  vpc:
+    securityGroupIds:
+      - !Ref LambdaSecurityGroup
+    subnetIds:
+      - !Ref SubnetAPrivate
+      - !Ref SubnetBPrivate
+  environment: # With the plugin enabled, all variables in .env are automatically imported
+    NODE_ENV: ${opt:stage, 'dev'}
+    DB_NAME: ${env:DB_NAME}
+    DB_USER: ${env:DB_USER}
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    DB_PORT: ${env:DB_PORT}
+    DB_HOST: ${self:custom.PROXY_ENDPOINT}
+
+custom:
+  DB_IDENTIFIER: db-${opt:stage, 'dev'}
+  dev_DB_INSTANCE_CLASS: db.t2.micro
+  prod_DB_INSTANCE_CLASS: db.t2.micro
+  PROXY_ENDPOINT: !GetAtt RDSProxy.Endpoint
+  PROXY_NAME: db-proxy-${opt:stage, 'dev'}
+  VPC_CIDR: 10
+  DB_NAME: ${env:DB_NAME}
+  DB_USER: ${env:DB_USER}
+  DB_PASSWORD: ${env:DB_PASSWORD}
+  DB_PORT: ${env:DB_PORT}
+  DB_HOST: ${self:custom.PROXY_ENDPOINT}
+
+functions:
+  proxyHealthCheck:
+    handler: lib/handlers/proxyHealthCheck.handler
+    events:
+      - http:
+          path: proxy-healthcheck
+          method: get
+
+  testInternetAccess:
+    handler: lib/handlers/testInternetAccess.handler
+    events:
+      - http:
+          path: test-internet-access
+          method: get
+plugins:
+  - serverless-pseudo-parameters
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+resources:
+  - ${file(resources/VpcResources.yml)}
+  - ${file(resources/RoutingResources.yml)}
+  - ${file(resources/RdsResources.yml)}
+  - ${file(resources/RdsProxyResources.yml)}

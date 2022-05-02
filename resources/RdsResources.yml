@@ -1,0 +1,28 @@
+Resources:
+  RDSInstance:
+    DependsOn: VPCGA
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: ${self:custom.DB_IDENTIFIER}
+      DBName: ${env:DB_NAME}
+      MasterUsername: ${self:custom.DB_USER}
+      MasterUserPassword: ${self:custom.DB_PASSWORD}
+      Engine: postgres
+      EngineVersion: "10.17"
+      DBInstanceClass: ${self:custom.${opt:stage}_DB_INSTANCE_CLASS}
+      AllocatedStorage: "20"
+      PubliclyAccessible: true
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      VPCSecurityGroups:
+        - !GetAtt RDSSecurityGroup.GroupId
+
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: "RDS subnet group"
+      SubnetIds:
+        - !Ref SubnetA
+        - !Ref SubnetB
+      Tags:
+        - Key: "Name"
+          Value: "RDSSubnetGroup"
