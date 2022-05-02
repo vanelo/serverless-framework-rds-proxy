@@ -24,8 +24,9 @@ Connecting to a relational database from a Lambda function is challenging to get
 
 ## Get started
 **Requirements**
-Have an aws account and credentials configured
-Have serverless framework installed
+- Have an aws account and credentials configured
+- Have serverless framework installed
+
 **Deploy**
 - Install dependencies: 
 ```bash
